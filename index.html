@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOTA 2 Tracker - OpenDota</title>
+  <meta name="description" content="Dota 2 match tracker, hero stats, player profiles, and pro scene powered by the OpenDota API">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dota: {
+              bg: '#0a0e13',
+              dark: '#0d1117',
+              card: '#141c28',
+              'card-hover': '#1a2535',
+              border: '#1e2a3a',
+              gold: '#c9a84c',
+              'gold-light': '#e4cc80',
+              'gold-dim': '#8a7535',
+              crimson: '#c23c2a',
+              'crimson-light': '#e85d4a',
+              radiant: '#4ade80',
+              dire: '#ef4444',
+              blue: '#3b82f6',
+              'text-primary': '#e8dcc8',
+              'text-secondary': '#9ca3af',
+              'text-muted': '#6b7280',
+            }
+          },
+          fontFamily: {
+            display: ['Cinzel', 'serif'],
+            body: ['Rajdhani', 'sans-serif'],
+          },
+          animation: {
+            'pulse-gold': 'pulseGold 2s ease-in-out infinite',
+            'fade-in': 'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'shimmer': 'shimmer 1.5s infinite',
+          },
+          keyframes: {
+            pulseGold: {
+              '0%, 100%': { boxShadow: '0 0 5px rgba(201,168,76,0.3)' },
+              '50%': { boxShadow: '0 0 20px rgba(201,168,76,0.6)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="flex bg-dota-bg text-dota-text-primary font-body h-screen overflow-hidden">
+  
+  <!-- Mobile Header (Visible only on small screens) -->
+  <header class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-dota-dark/95 backdrop-blur-md border-b border-dota-border z-30 flex items-center justify-between px-4">
+    <a href="#/" class="flex items-center gap-3 group">
+      <div class="w-8 h-8 bg-gradient-to-br from-dota-gold to-dota-crimson rounded flex items-center justify-center font-display font-bold text-white text-xs">
+        D2
+      </div>
+      <span class="font-display text-base text-dota-gold tracking-wider">DOTA TRACKER</span>
+    </a>
+    <button type="button" id="mobile-menu-btn" class="p-2 text-dota-text-secondary hover:text-dota-gold transition-colors" aria-label="Toggle menu">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <title>Menu</title>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Mobile Overlay -->
+  <div id="mobile-overlay" class="lg:hidden"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-dota-dark border-r border-dota-border transform -translate-x-full lg:translate-x-0 lg:static lg:flex-shrink-0 transition-transform duration-300 ease-in-out flex flex-col">
+    <!-- Sidebar Header (Logo) -->
+    <div class="h-20 flex items-center px-6 border-b border-dota-border">
+      <a href="#/" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 bg-gradient-to-br from-dota-gold to-dota-crimson rounded-lg flex items-center justify-center font-display font-bold text-white text-base group-hover:shadow-lg group-hover:shadow-dota-gold/30 transition-all">
+          D2
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display text-lg text-dota-gold tracking-wider leading-tight">DOTA TRACKER</span>
+          <span class="text-[0.65rem] text-dota-text-muted uppercase tracking-widest">OpenDota Powered</span>
+        </div>
+      </a>
+      <!-- Close button for mobile -->
+      <button type="button" id="close-sidebar-btn" aria-label="Close menu" class="lg:hidden ml-auto text-dota-text-muted hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Close Menu</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search Section -->
+    <div class="p-4 border-b border-dota-border">
+      <div class="relative">
+        <input type="text" id="global-search" placeholder="Search players..." 
+          class="w-full bg-dota-card border border-dota-border rounded-lg pl-10 pr-4 py-2 text-sm text-dota-text-primary placeholder-dota-text-muted focus:outline-none focus:border-dota-gold/50 focus:ring-1 focus:ring-dota-gold/30 transition-all font-body">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dota-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Search</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-dota-card border border-dota-border rounded-lg shadow-2xl max-h-80 overflow-y-auto z-50"></div>
+      </div>
+    </div>
+
+    <!-- Navigation Links -->
+    <div id="sidebar-content" class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+      <div class="text-xs font-semibold text-dota-text-muted uppercase tracking-wider mb-2 px-3">Main Menu</div>
+      <a href="#/" class="sidebar-link" data-page="home">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Home</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Dashboard
+      </a>
+      <a href="#/heroes" class="sidebar-link" data-page="heroes">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Heroes</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Heroes
+      </a>
+      <a href="#/players" class="sidebar-link" data-page="players">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Players</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        Players
+      </a>
+      <a href="#/matches" class="sidebar-link" data-page="matches">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Matches</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        Matches
+      </a>
+
+      <div class="text-xs font-semibold text-dota-text-muted uppercase tracking-wider mt-6 mb-2 px-3">Competitive</div>
+      <a href="#/teams" class="sidebar-link" data-page="teams">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Teams</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        Teams
+      </a>
+      <a href="#/pro-scene" class="sidebar-link" data-page="pro-scene">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Pro Scene</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+        </svg>
+        Pro Scene
+      </a>
+
+      <div class="text-xs font-semibold text-dota-text-muted uppercase tracking-wider mt-6 mb-2 px-3">Analytics</div>
+      <a href="#/records" class="sidebar-link" data-page="records">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Records</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Records
+      </a>
+      <a href="#/scenarios" class="sidebar-link" data-page="scenarios">
+        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <title>Scenarios</title>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        Scenarios
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+    
+    <!-- Content Area (Scrollable) -->
+    <main id="app-container" class="flex-1 overflow-y-auto mt-16 lg:mt-0 pb-12">
+      <div id="app" class="min-h-full">
+        <!-- Pages render here -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-2"></div>
+
+  <!-- Scripts -->
+  <script>
+    // Simple inline script for sidebar toggle on mobile
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileBtn = document.getElementById('mobile-menu-btn');
+      const closeBtn = document.getElementById('close-sidebar-btn');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('active');
+      }
+
+      if(mobileBtn) mobileBtn.addEventListener('click', toggleSidebar);
+      if(closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+      if(overlay) overlay.addEventListener('click', toggleSidebar);
+
+      // Close sidebar when clicking a link on mobile
+      const links = sidebar.querySelectorAll('a[href^="#/"]');
+      links.forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1024) { // lg breakpoint in tailwind
+            toggleSidebar();
+          }
+        });
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
