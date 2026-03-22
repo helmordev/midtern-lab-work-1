@@ -2,16 +2,7 @@
 // Reusable UI Components
 // ================================================
 
-import {
-	heroImg,
-	formatDuration,
-	winRate,
-	timeAgo,
-	formatNumber,
-	rankTierToMedal,
-	getAttrClass,
-	heroStore,
-} from "./utils.js";
+import { heroImg, formatDuration, timeAgo, heroStore } from "./utils.js";
 
 export function loader(text = "Loading...") {
 	return `
