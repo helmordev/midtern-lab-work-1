@@ -5,7 +5,7 @@
 
 import { api } from "./api.js";
 import { Router } from "./router.js";
-import { heroStore, debounce, showToast } from "./utils.js";
+import { heroStore, debounce } from "./utils.js";
 
 // Import all pages
 import { renderHome } from "./pages/home.js";

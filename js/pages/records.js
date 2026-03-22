@@ -12,7 +12,7 @@ import {
 	miniHeroImg,
 	tabBar,
 } from "../components.js";
-import { heroStore, formatDuration, timeAgo, formatNumber } from "../utils.js";
+import { heroStore, timeAgo, formatNumber } from "../utils.js";
 
 export async function renderRecords() {
 	const app = document.getElementById("app");

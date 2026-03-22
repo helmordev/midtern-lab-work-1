@@ -8,7 +8,7 @@
 
 import { api } from "../api.js";
 import { loader, errorState, emptyState, tabBar } from "../components.js";
-import { formatDuration, timeAgo, formatNumber } from "../utils.js";
+import { formatDuration, timeAgo } from "../utils.js";
 
 // ---- Pro Scene Main Page ----
 export async function renderProScene() {
